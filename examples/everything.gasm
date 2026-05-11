@@ -1,0 +1,197 @@
+| === gamma: reg assign ===
+r1 = r2
+r1 = r2 + r3
+r1 = r2 - r3
+r1 = r2 * r3
+r1 = r2 / r3
+r1 = r2 >> r3
+r1 = r2 << r3
+r1 = r2 & r3
+r1 = r2 # r3
+r1 = r2 ^ r3
+r1 = r2 < r3
+r1 = r2 == r3
+r1 = r2 <= r3
+r1 = r2 >>> r3
+
+| === gamma: opc ===
+r1 = r2 + 4
+r1 = r2 - 4
+r1 = r2 * 4
+r1 = r2 / 4
+r1 = r2 >> 4
+r1 = r2 << 4
+r1 = r2 + (end - start)
+r1 = r2 + label
+r1 = r2 + 4 + 3 - 2
+
+| === gamma: unary ===
+r1 = -r2
+r1 = ~r2
+r1 = -42
+r1 = ~42
+r1 = -(end - start)
+
+| === gamma: opeq ===
+r1 += r2
+r1 -= r2
+r1 *= r2
+r1 /= r2
+r1 >>= r2
+r1 <<= r2
+r1 += 4
+r1 -= 4
+r1 *= 4
+r1 >>= 4
+r1 <<= 4
+
+| === gamma: move ===
+r1 = r2
+r1 = 42
+r1 = label
+r1 = (end - start)
+r1 = -42
+
+| === gamma: load ===
+r1 = [r2]
+r1 = [r2 + 4]
+r1 = [r2 - 4]
+r1 = [42]
+r1 = [label]
+r1 = [r2 + label]
+r1 = [r2 - label]
+r1 = [r2 + (end - start)]
+r1 = [r2 - (end - start)]
+
+| === gamma: store ===
+[r2] = r1
+[r2 + 4] = r1
+[r2 - 4] = r1
+[42] = r1
+[label] = r1
+[r2 + label] = r1
+[r2 - label] = r1
+[r2 + (end - start)] = r1
+
+| === gamma: goto ===
+goto label
+goto r1
+r1 = goto label
+
+| === gamma: if boolean ===
+if (r1) goto label
+if (!r1) goto label
+if (r1) r2 = goto label
+if (!r1) r2 = goto label
+
+| === gamma: if zero ===
+if (r1 == 0) goto label
+if (r1 != 0) goto label
+if (r1 == 0) r2 = goto label
+if (r1 != 0) r2 = goto label
+
+| === gamma: labels ===
+foo:
+bar:
+foo: r1 = r2 + r3
+
+| === gamma: symbol assign ===
+. = 0x000
+sym = 42
+sym = label
+sym = label + 4
+sym = (end - start)
+
+| === gamma: r() ===
+r(1) = r2
+r1 = r(2)
+r1 = r(r2 + 1)
+r(r1 + 1) = r(r2 + 1)
+
+| === gamma: parenthesis ===
+r1 = (r2)
+r1 += (2 + r3)
+
+| === gamma: macro ===
+.macro foo() {
+    r1 = r2 + r3
+}
+.macro bar(x) {
+    r1 = r2 + x
+}
+.include beta.uasm
+
+| === beta: op ===
+ADD(r1, r2, r3)
+SUB(r1, r2, r3)
+MUL(r1, r2, r3)
+DIV(r1, r2, r3)
+SHR(r1, r2, r3)
+SHL(r1, r2, r3)
+AND(r1, r2, r3)
+OR(r1, r2, r3)
+XOR(r1, r2, r3)
+CMPLT(r1, r2, r3)
+CMPEQ(r1, r2, r3)
+CMPLE(r1, r2, r3)
+SRA(r1, r2, r3)
+
+| === beta: opc ===
+ADDC(r1, 4, r3)
+SUBC(r1, 4, r3)
+MULC(r1, 4, r3)
+DIVC(r1, 4, r3)
+SHRC(r1, 4, r3)
+SHLC(r1, 4, r3)
+ANDC(r1, 4, r3)
+ORC(r1, 4, r3)
+XORC(r1, 4, r3)
+CMPLTC(r1, 4, r3)
+CMPEQC(r1, 4, r3)
+CMPLEC(r1, 4, r3)
+SRAC(r1, 4, r3)
+ADDC(r1, label, r3)
+ADDC(r1, (end - start), r3)
+
+| === beta: load/store ===
+LD(r2, 0, r1)
+LD(r2, 4, r1)
+LD(r2, -4, r1)
+LD(r2, label, r1)
+LD(r2, (end - start), r1)
+LD(label, r1)
+LD(42, r1)
+ST(r1, 0, r2)
+ST(r1, 4, r2)
+ST(r1, -4, r2)
+ST(r1, label, r2)
+ST(r1, (end - start), r2)
+ST(r1, label)
+ST(r1, 42)
+
+| === beta: branch ===
+BR(label)
+BR(label, r31)
+BEQ(r1, label, r31)
+BNE(r1, label, r31)
+BEQ(r1, label)
+BNE(r1, label)
+BF(r1, label, r31)
+BT(r1, label, r31)
+BF(r1, label)
+BT(r1, label)
+JMP(r1)
+JMP(r1, r31)
+
+| === beta: move ===
+MOVE(r1, r2)
+CMOVE(42, r1)
+CMOVE(label, r1)
+CMOVE((end - start), r1)
+
+| === beta: misc ===
+LONG(5)
+CALL(fib)
+PUSH(r1)
+POP(r1)
+DEALLOCATE(1)

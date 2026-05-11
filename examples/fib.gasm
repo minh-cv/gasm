@@ -1,0 +1,49 @@
+.include beta.uasm
+
+ALLOCATE(50)
+
+r0 = [fib_arg]
+PUSH(r0)
+lp = goto fib
+DEALLOCATE(1)
+[fib_result] = r0
+HALT()
+
+fib:
+    PUSH(lp)
+    PUSH(bp)
+    bp = sp
+    PUSH(r1)
+
+    r1 = [bp - 12]
+    r0 = r1 <= 1
+    if (r0) goto base_case
+
+    r1 -= 1
+    PUSH(r1)
+    CALL(fib)
+    DEALLOCATE(1)
+    r1 -= 1
+    PUSH(r1)
+    r1 = r0
+    CALL(fib)
+    DEALLOCATE(1)
+    r0 += r1
+    goto exit_sequence
+
+    base_case:
+    r0 = r1
+
+    exit_sequence:
+    POP(r1)
+    sp = bp
+    POP(bp)
+    POP(lp)
+    goto lp
+
+. = 0x400
+fib_arg:
+LONG(10)
+
+fib_result = .
+LONG(0)
