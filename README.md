@@ -1,5 +1,6 @@
 # gasm
 A transpiler written in C++20 that converts between Beta assembly and Gamma, a readable superset of Beta assembly that adds syntactic sugar for common instruction patterns.
+
 Try it now on [Compiler Explorer](https://godbolt.org/z/en8hzPWvK).
 
 An example program of Gamma
@@ -64,7 +65,7 @@ HALT()
   </tr>
 
   <tr>
-    <td rowspan="7">Memory</td>
+    <td rowspan="8">Memory</td>
     <td><code>r1 = [r2]</code></td>
     <td><code>LD(r2, 0, r1)</code></td>
   </tr>
@@ -93,7 +94,6 @@ HALT()
     <td><code>LD(lit, r1)</code></td>
   </tr>
   <tr>
-    <td></td>
     <td><code>[lit] = r1</code></td>
     <td><code>ST(r1, lit)</code></td>
   </tr>
@@ -169,6 +169,7 @@ Options:
 * `-g`: convert the source file to Gamma
 * `-b`: convert the source file to Beta (default option).
 * `--debug`: enable debug output.
+
 The converted result is printed to stdout. Redirect to another file if needed.
 ```bash
 gasm program.uasm -g > program.gasm
