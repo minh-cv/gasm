@@ -173,7 +173,8 @@ int main(int argc, char** argv) {
             lex_result.print_error(error);
         }
     }
-    gasm::ParseResult parse_result = gasm::parse(lex_result);
+    gasm::Parser parser{lex_result};
+    gasm::ParseResult parse_result = parser.parse();
     if (mode == DEBUG) {
         std::cout << "\n== Parser ==\n";
         for (const gasm::Stmt& stmt: parse_result.stmts) {
@@ -196,6 +197,7 @@ int main(int argc, char** argv) {
         gasm::to_beta(std::cout, parse_result);
         std::cout << "\n\n== Gamma ==\n";
         gasm::to_gamma(std::cout, parse_result);
+        std::cout << "\n";
         std::cout << std::flush;
     }
     else if (mode == GAMMA) {

@@ -100,7 +100,46 @@ namespace gasm {
         bool ok() const;
     };
 
-    ParseResult parse(const LexResult& tokens);
+    struct Parser {
+        const LexResult& lex_result;
+        const std::vector<Token>& tokens = lex_result.tokens;
+        std::vector<ParseResult::Error> errors{};
+        std::size_t current = 0;
+
+        ParseResult parse();
+
+        std::string_view substr(std::size_t start, std::size_t current);
+        Verbatim parse_macro();
+        Verbatim parse_include();
+        std::optional<Expr> parse_expr(bool allow_reg, std::optional<std::reference_wrapper<const Token>> op);
+        std::optional<MemExpr> parse_mem_expr();
+        std::optional<Store> parse_store();
+        std::optional<Load> parse_load();
+        std::optional<Stmt> parse_stmt();
+        std::optional<Goto> parse_if();
+        std::optional<Stmt> parse_rhseq(const RegExpr& rc);
+        std::optional<Stmt> parse_rhsopeq(const RegExpr& rc);
+        std::optional<std::variant<RegExpr, Expr>> parse_goto();
+        std::optional<Inst> parse_inst(const Token& identifier, std::vector<std::variant<Expr, RegExpr>> params);
+        std::optional<RegExpr> parse_reg_expr();
+
+        bool check_reg_expr();
+        bool match_blank(Token::Type type);
+        int precedence(Token::Type type);
+        bool is_op(Token::Type type);
+        bool is_binary_op(Token::Type type);
+        bool is_beta_binary_op(Token::Type type);
+        bool is_gamma_binary_op(Token::Type type);
+        std::optional<Expr> parse_atomic(bool allow_reg);
+        std::optional<std::vector<std::variant<Expr, RegExpr>>> parse_macro_param();
+        const Token& peek();
+        bool match(Token::Type type);
+        bool match_until(Token::Type type);
+        bool match_until(std::initializer_list<Token::Type> types);
+        bool expect(Token::Type type, const std::string& msg);
+        bool expect_blank(Token::Type type, const std::string& msg);
+        void error(const std::string& msg);
+    };
 }
 
 #endif
