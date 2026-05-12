@@ -228,24 +228,6 @@ struct Vistor {
         stream << v.data;
     }
 
-    std::string_view trim_reg_expr(const RegExpr& expr) {
-        if (expr.is_reg_identifier) {
-            return expr.data;
-        }
-        return std::string_view{expr.data.begin() + 2, expr.data.end() - 1};
-    }
-
-    std::string_view trim_expr(const Expr& expr, int trim_precedence) {
-        if (expr.inner_lowest_precedence <= trim_precedence) {
-            return expr.data;
-        }
-        assert(expr.data.size() >= 2);
-        if (expr.data.front() == '(' && expr.data.back() == ')') {
-            return expr.data.substr(1, expr.data.size() - 2);
-        }
-        return expr.data;
-    }
-
     void operator()(const Move& m) {
         stream << m.rc.data << " = ";
         if (std::holds_alternative<RegExpr>(m.src)) {
