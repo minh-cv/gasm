@@ -6,3 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 add_executable(gasm src/main.cpp src/lexer.cpp src/parser.cpp src/transpiler.cpp)
 target_include_directories(gasm PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(gasm PRIVATE
+    -Wall
+    -Wextra
+    -Wshadow
+    -Wunreachable-code
+)
