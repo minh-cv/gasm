@@ -392,10 +392,6 @@ gasm::LexResult gasm::lex(const std::string& code) {
             l.lex_char();
             break;
         default:
-            if (code[l.current] < 0) {
-                l.error("non-ASCII encoding is not supported");
-                break;
-            }
             if (std::isdigit(code[l.current])) {
                 l.lex_number();
                 break;
@@ -407,10 +403,7 @@ gasm::LexResult gasm::lex(const std::string& code) {
             l.error(std::string{"unrecognized character '"} + code[l.current] + "'");
             break;
         }
-        if (l.type == ERROR) {
-            // l.push_token();
-        }
-        else if ((l.type == BLANK || l.type == NEWLINE) && !(l.tokens.empty()) && l.tokens.back().type == l.type && l.tokens.back().lexeme.data() + l.tokens.back().lexeme.size() == l.code.data() + l.start) {
+        if ((l.type == BLANK || l.type == NEWLINE) && !(l.tokens.empty()) && l.tokens.back().type == l.type && l.tokens.back().lexeme.data() + l.tokens.back().lexeme.size() == l.code.data() + l.start) {
             l.merge_token();
         }
         else {
