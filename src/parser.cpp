@@ -7,7 +7,7 @@
 #include <optional>
 #include <functional>
 #include <variant>
-#include <unordered_set>
+#include <unordered_map>
 #include <token.hpp>
 
 using namespace gasm;
@@ -534,47 +534,37 @@ std::optional<std::variant<RegExpr, Expr>> gasm::Parser::parse_goto() {
 }
 
 std::optional<Inst> gasm::Parser::parse_inst(const Token& identifier, std::vector<std::variant<Expr, RegExpr>> params) {
-    using Pair = std::pair<std::string_view, unsigned int>;
+    using Pair = std::pair<std::string_view, std::size_t>;
     static auto hasher = [](Pair p) {
-        return (std::hash<std::string_view>()(p.first) << 8) + p.second;
+        return (std::hash<std::string_view>()(p.first) << 4) + p.second;
     };
-    using ValidPairs = std::unordered_set<Pair, decltype(hasher)>;
+    using ValidPairs = std::unordered_map<Pair, unsigned int, decltype(hasher)>;
     static const ValidPairs valid_pairs = [] {
-        static ValidPairs valid_pairs;
+        static ValidPairs pairs;
         for (std::string_view opcode: {"ADD", "SUB", "MUL", "DIV", "SHL", "SHR", "SRA", "CMPEQ", "CMPLT", "CMPLE", "AND", "OR", "XOR"}) {
-            valid_pairs.insert({opcode, 0x37});
+            pairs.insert({{opcode, 3}, 0x37});
         }
         for (std::string_view opcode: {"ADDC", "SUBC", "MULC", "DIVC", "SHLC", "SHRC", "SRAC", "CMPEQC", "CMPLTC", "CMPLEC", "ANDC", "ORC", "XORC", "LD", "ST", "BEQ", "BNE", "BF", "BT"}) {
-            valid_pairs.insert({opcode, 0x35});
+            pairs.insert({{opcode, 3}, 0x35});
         }
         for (std::string_view opcode: {"BEQ", "BNE", "BF", "BT", "ST"}) {
-            valid_pairs.insert({opcode, 0x21});
+            pairs.insert({{opcode, 2}, 0x21});
         }
         for (std::string_view opcode: {"LD", "CMOVE", "BR"}) {
-            valid_pairs.insert({opcode, 0x22});
+            pairs.insert({{opcode, 2}, 0x22});
         }
         for (std::string_view opcode: {"JMP", "MOVE"}) {
-            valid_pairs.insert({opcode, 0x23});
+            pairs.insert({{opcode, 2}, 0x23});
         }
-        valid_pairs.insert({"JMP", 0x11});
-        valid_pairs.insert({"BR", 0x10});
-        return valid_pairs;
+        pairs.insert({{"JMP", 1}, 0x11});
+        pairs.insert({{"BR", 1}, 0x10});
+        return pairs;
     }();
-    auto reg_bit = [&](std::size_t i) -> unsigned int {
-        return i < params.size() &&
-            std::holds_alternative<RegExpr>(params[i]);
-    };
-
-    unsigned int param_types =
-        reg_bit(0) |
-        (reg_bit(1) << 1u) |
-        (reg_bit(2) << 2u);
-    unsigned int params_code = static_cast<unsigned int>((params.size() << 4u) | param_types);
-    Pair pair = {identifier.lexeme, params_code};
+    Pair pair = {identifier.lexeme, params.size()};
     if (valid_pairs.count(pair) != 1) {
         return {};
     }
-    return Inst{params, identifier, params_code};
+    return Inst{params, identifier, valid_pairs.at(pair)};
     
 }
 
