@@ -120,7 +120,7 @@ auto print_stmt = [](auto&& arg) {
 }
 
 int invalid_param(int errcode) {
-    std::cerr << "Usage: gasm <input_source> [-g | -b | --debug]";
+    std::cerr << "Usage: gasm <input_source> [-g | -b | --debug]\n";
     return errcode;
 }
 
