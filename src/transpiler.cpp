@@ -7,6 +7,7 @@
 #include <variant>
 #include <cassert>
 #include <unordered_map>
+#include <limits>
 
 #include <token.hpp>
 #include <parser.hpp>
