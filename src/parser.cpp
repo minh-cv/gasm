@@ -252,12 +252,6 @@ struct Parser {
                 error("r-parenthesis cannot be used as a standalone expression");
                 return {};
             }
-            if (check_reg_expr()) {
-                std::optional<RegExpr> ra = parse_reg_expr();
-                if (ra == std::nullopt) {
-                    return {};
-                }
-            }
             break;
         }
         case IF:
