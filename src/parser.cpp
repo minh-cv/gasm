@@ -81,7 +81,7 @@ struct Parser {
         assert(!op.has_value() || is_gamma_binary_op(op->get().type));
         while (match_blank(MINUS) || match(TILDE)) {}
         match(BLANK);
-        auto atomic_op = parse_atomic(allow_reg, true);
+        auto atomic_op = parse_atomic(allow_reg);
         if (atomic_op == std::nullopt) {
             return {};
         }
@@ -193,7 +193,7 @@ struct Parser {
             return parse_macro();
         case IDENTIFIER: case NUMBER: {
             const Token& identifier = peek();
-            assert(match_primary());
+            ++current;
             match(BLANK);
             if (match(COLON)) {
                 return Verbatim{substr(start, current)};
@@ -307,7 +307,12 @@ struct Parser {
                 return {};
             }
             match(BLANK);
-            expect_primary("expect two strings and a term after '.pcheckoff' or '.tcheckoff'");
+            {
+                auto op = parse_atomic(true);
+                if (op == std::nullopt) {
+                    return {};
+                }
+            }
             return Verbatim{substr(start, current)};
         case VERIFY: {
             ++current;
@@ -395,7 +400,7 @@ struct Parser {
                 if (op == std::nullopt) {
                     return {};
                 }
-                return {Op{MINUS, RegExpr{"R31", true}, *op, rc}};
+                return {Op{MINUS, RegExpr{rc.data[0] == 'r' ? "r31" : "R31", true}, *op, rc}};
             }
             current = saved;
             auto op = parse_expr(false, {});
@@ -644,28 +649,23 @@ struct Parser {
         }
     }
 
-    std::optional<Expr> parse_atomic(bool allow_reg, bool allow_paren) {
+    std::optional<Expr> parse_atomic(bool allow_reg) {
         std::size_t start = current;
         if (allow_reg && match(REG_IDENTIFIER)) {
             return Expr{substr(start, current), 0, 0, true};
         }
-        if (allow_paren && match(LEFT_PAREN)) {
+        if (match(LEFT_PAREN)) {
             auto op = parse_expr(true, {});
             if (!(expect_blank(RIGHT_PAREN, "unclosed parenthesis") && op != std::nullopt)) {
                 return {};
             }
             return Expr{substr(start, current), 0, op->inner_lowest_precedence, false};
         }
-        if (!expect_primary(std::string{"expect one of: identifier, number"} + (allow_reg ? ", register" : "") + (allow_paren ? ", expression" : ""))) {
+        if (!(tokens[current].type == NUMBER || tokens[current].type == IDENTIFIER)) {
+            error(std::string{"expect one of: identifier, number"} + (allow_reg ? ", register" : "") + ", expression");
             return {};
         }
-        match(BLANK);
-        if (peek().type == LEFT_PAREN) {
-            auto op = parse_macro_param();
-            if (op == std::nullopt) {
-                return {};
-            }
-        }
+        ++current;
         return Expr{substr(start, current), 0, 0, false};
     }
 
@@ -748,20 +748,6 @@ struct Parser {
     bool expect_blank(Token::Type type, const std::string& msg) {
         match(BLANK);
         return expect(type, msg);
-    }
-
-    bool match_primary() {
-        if (current < tokens.size() && (tokens[current].type == NUMBER || tokens[current].type == IDENTIFIER)) {
-            ++current;
-            return true;
-        }
-        return false;
-    }
-
-    bool expect_primary(const std::string& msg) {
-        if (match_primary()) return true;
-        error(msg);
-        return false;
     }
 
     void error(const std::string& msg) {
