@@ -1,3 +1,4 @@
+#include "constant.hpp"
 #include <lexer.hpp>
 #include <vector>
 #include <string>
@@ -64,8 +65,6 @@ gasm::LexResult gasm::lex(const std::string& code) {
             ++l.current;
             l.lex_op_eq(shifttype, shifteqtype);
         }
-
-        const std::unordered_map<std::string, gasm::Token::Type> DIRECTIVES{{".macro", MACRO}, {".include", INCLUDE}, {".options", OPTIONS}, {".protect", NO_PARAM_DIRECTIVE}, {".align", ALIGN}, {".ascii", TEXT}, {".text", TEXT}, {".breakpoint", NO_PARAM_DIRECTIVE}, {".unprotect", NO_PARAM_DIRECTIVE}, {".pcheckoff", CHECKOFF}, {".tcheckoff", CHECKOFF}, {".verify", VERIFY}};
 
         bool match_directive(const std::string& str) const {
             return DIRECTIVES.count(str) == 1;

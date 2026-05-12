@@ -125,11 +125,6 @@ namespace gasm {
 
         bool check_reg_expr();
         bool match_blank(Token::Type type);
-        int precedence(Token::Type type);
-        bool is_op(Token::Type type);
-        bool is_binary_op(Token::Type type);
-        bool is_beta_binary_op(Token::Type type);
-        bool is_gamma_binary_op(Token::Type type);
         std::optional<Expr> parse_atomic(bool allow_reg);
         std::optional<std::vector<std::variant<Expr, RegExpr>>> parse_macro_param();
         const Token& peek();

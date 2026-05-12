@@ -1,3 +1,4 @@
+#include "constant.hpp"
 #include <transpiler.hpp>
 
 #include <vector>
@@ -16,7 +17,7 @@ using namespace gasm;
 using enum gasm::Token::Type;
 
 void gasm::to_beta(std::ostream& stream, const gasm::ParseResult& parse_result) {
-struct Vistor {
+struct Visitor {
     std::ostream& stream;
 
     void operator()(const Verbatim& v) {
@@ -64,7 +65,7 @@ struct Vistor {
                     stream << "-" << st.mem.expr->data;
                 }
                 else {
-                    stream << trim_expr(*st.mem.expr, 1); // precedence(PLUS)
+                    stream << trim_expr(*st.mem.expr, *precedence(PLUS));
                 }
             }
             stream << ", " << trim_reg_expr(*st.mem.reg);
@@ -165,50 +166,15 @@ struct Vistor {
         stream << ")";
     }
 
-    
-
-    std::string_view get_opcode(Token::Type type) {
-        switch (type) {
-        case PLUS:
-            return "ADD";
-        case MINUS:
-            return "SUB";
-        case STAR:
-            return "MUL";
-        case SLASH:
-            return "DIV";
-        case AMPERSAND:
-            return "AND";
-        case HASH:
-            return "OR";
-        case LESS:
-            return "CMPLT";
-        case EQUAL_EQUAL:
-            return "CMPEQ";
-        case LESS_EQUAL:
-            return "CMPLE";
-        case GREATER_GREATER:
-            return "SHR";
-        case GREATER_GREATER_GREATER:
-            return "SRA";
-        case LESS_LESS:
-            return "SHL";
-        case CARET:
-            return "XOR";
-        default:
-            assert(false);
-        }
-    }
-
     void operator()(const Op& op) {
-        stream << get_opcode(op.type) << "(" 
+        stream << *get_instruction(op.type) << "(" 
             << trim_reg_expr(op.ra) << ", "
             << trim_reg_expr(op.rb) << ", "
             << trim_reg_expr(op.rc) << ")";
     }
 
     void operator()(const OpC& op) {
-        stream << get_opcode(op.type) << "C(" 
+        stream << *get_instruction(op.type) << "C(" 
             << trim_reg_expr(op.ra) << ", "
             << op.lit.data << ", "
             << trim_reg_expr(op.rc) << ")";
@@ -221,7 +187,7 @@ struct Vistor {
     }
 }
 void gasm::to_gamma(std::ostream& stream, const gasm::ParseResult& parse_result) {
-struct Vistor {
+struct Visitor {
     std::ostream& stream;
 
     void operator()(const Verbatim& v) {
@@ -307,29 +273,6 @@ struct Vistor {
         return Expr{{buffer.begin(), buffer.end()}, 0, 0, false};
     }
 
-    int precedence(Token::Type type) {
-        switch (type) {
-        case STAR: case SLASH: case PERCENTAGE:
-            return 1;
-        case PLUS: case MINUS:
-            return 2;
-        case GREATER_GREATER: case LESS_LESS: case GREATER_GREATER_GREATER:
-            return 3;
-        case LESS: case LESS_EQUAL:
-            return 4;
-        case EQUAL_EQUAL:
-            return 5;
-        case AMPERSAND:
-            return 6;
-        case CARET:
-            return 7;
-        case HASH:
-            return 8;
-        default:
-            assert(false);
-        }
-    }
-
     void operator()(const Inst& inst) {
         std::string buffer[3];
         std::size_t size = inst.params.size();
@@ -354,7 +297,7 @@ struct Vistor {
         if (inst.identifier.lexeme == "LD") {
             RegExpr reg = transform_reg_expr(size == 2 ? inst.params[1] : inst.params[2], buffer[0]);
             std::optional<RegExpr> base = size == 2 ? std::optional<RegExpr>{} : std::optional{transform_reg_expr(inst.params[0], buffer[1])};
-            std::optional<Expr> offset = transform_expr(size == 2 ? inst.params[0] : inst.params[1], buffer[2], precedence(PLUS));
+            std::optional<Expr> offset = transform_expr(size == 2 ? inst.params[0] : inst.params[1], buffer[2], *precedence(PLUS));
             bool is_plus = true;
             if (size == 3) {
                 assert(offset->data.size() != 0);
@@ -379,7 +322,7 @@ struct Vistor {
         if (inst.identifier.lexeme == "ST") {
             RegExpr reg = transform_reg_expr(inst.params[0], buffer[0]);
             std::optional<RegExpr> base = size == 2 ? std::optional<RegExpr>{} : std::optional{transform_reg_expr(inst.params[2], buffer[1])};
-            std::optional<Expr> offset = transform_expr(inst.params[1], buffer[2], precedence(PLUS));
+            std::optional<Expr> offset = transform_expr(inst.params[1], buffer[2], *precedence(PLUS));
             bool is_plus = true;
             if (size == 3) {
                 assert(offset->data.size() != 0);
@@ -509,7 +452,7 @@ struct Vistor {
             operator()(OpC{
                 type,
                 transform_reg_expr(inst.params[0], buffer[0]), 
-                transform_expr(inst.params[1], buffer[1], precedence(type)), 
+                transform_expr(inst.params[1], buffer[1], *precedence(type)), 
                 transform_reg_expr(inst.params[2], buffer[2])
             });
             break;
@@ -542,48 +485,17 @@ struct Vistor {
         stream << std::get<Expr>(g.target).data;
     }
 
-    std::string_view get_sign(Token::Type type) {
-        switch (type) {
-        case PLUS:
-            return "+";
-        case MINUS:
-            return "-";
-        case STAR:
-            return "*";
-        case SLASH:
-            return "/";
-        case AMPERSAND:
-            return "&";
-        case HASH:
-            return "#";
-        case LESS:
-            return "<";
-        case EQUAL_EQUAL:
-            return "==";
-        case LESS_EQUAL:
-            return "<=";
-        case GREATER_GREATER:
-            return ">>";
-        case GREATER_GREATER_GREATER:
-            return ">>>";
-        case LESS_LESS:
-            return "<<";
-        case CARET:
-            return "^";
-        default:
-            assert(false);
-        }
-    }
+    
 
     void operator()(const Op& op) {
         if (op.type == MINUS && (op.ra.data == "r31" || op.ra.data == "R31")) {
             stream << op.rc.data << " = -" << op.rb.data;
         }
         else if (op.rc.data == op.ra.data) {
-            stream << op.rc.data << " " << get_sign(op.type) << "= " << op.rb.data;
+            stream << op.rc.data << " " << *get_operator_string(op.type) << "= " << op.rb.data;
         }
         else {
-            stream << op.rc.data << " = " << op.ra.data << " " << get_sign(op.type) << " " << op.rb.data;
+            stream << op.rc.data << " = " << op.ra.data << " " << *get_operator_string(op.type) << " " << op.rb.data;
         }
     }
 
@@ -592,10 +504,10 @@ struct Vistor {
             stream << op.rc.data << " = ~" << op.ra.data;
         }
         else if (op.rc.data == op.ra.data) {
-            stream << op.rc.data << " " << get_sign(op.type) << "= " << op.lit.data;
+            stream << op.rc.data << " " << *get_operator_string(op.type) << "= " << op.lit.data;
         }
         else {
-            stream << op.rc.data << " = " << op.ra.data << " " << get_sign(op.type) << " " << op.lit.data;
+            stream << op.rc.data << " = " << op.ra.data << " " << *get_operator_string(op.type) << " " << op.lit.data;
         }
     }
 

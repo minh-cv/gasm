@@ -1,3 +1,4 @@
+#include "constant.hpp"
 #include <parser.hpp>
 
 #include <vector>
@@ -7,7 +8,6 @@
 #include <optional>
 #include <functional>
 #include <variant>
-#include <unordered_map>
 #include <token.hpp>
 
 using namespace gasm;
@@ -118,8 +118,8 @@ std::optional<Expr> gasm::Parser::parse_expr(bool allow_reg, std::optional<std::
     if (sub_expr == std::nullopt) {
         return {};
     }
-    int expr_precedence = precedence(expr_op.type);
-    if (op.has_value() && expr_precedence > precedence(op->get().type)) {
+    int expr_precedence = *precedence(expr_op.type);
+    if (op.has_value() && expr_precedence > *precedence(op->get().type)) {
         error(std::string{"operator '"} + lexeme + "' has lower precedence than '" + std::string{op->get().lexeme} + "', use parenthesis if necessary");
         return {};
     }
@@ -534,37 +534,11 @@ std::optional<std::variant<RegExpr, Expr>> gasm::Parser::parse_goto() {
 }
 
 std::optional<Inst> gasm::Parser::parse_inst(const Token& identifier, std::vector<std::variant<Expr, RegExpr>> params) {
-    using Pair = std::pair<std::string_view, std::size_t>;
-    static auto hasher = [](Pair p) {
-        return (std::hash<std::string_view>()(p.first) << 4) + p.second;
-    };
-    using ValidPairs = std::unordered_map<Pair, unsigned int, decltype(hasher)>;
-    static const ValidPairs valid_pairs = [] {
-        static ValidPairs pairs;
-        for (std::string_view opcode: {"ADD", "SUB", "MUL", "DIV", "SHL", "SHR", "SRA", "CMPEQ", "CMPLT", "CMPLE", "AND", "OR", "XOR"}) {
-            pairs.insert({{opcode, 3}, 0x37});
-        }
-        for (std::string_view opcode: {"ADDC", "SUBC", "MULC", "DIVC", "SHLC", "SHRC", "SRAC", "CMPEQC", "CMPLTC", "CMPLEC", "ANDC", "ORC", "XORC", "LD", "ST", "BEQ", "BNE", "BF", "BT"}) {
-            pairs.insert({{opcode, 3}, 0x35});
-        }
-        for (std::string_view opcode: {"BEQ", "BNE", "BF", "BT", "ST"}) {
-            pairs.insert({{opcode, 2}, 0x21});
-        }
-        for (std::string_view opcode: {"LD", "CMOVE", "BR"}) {
-            pairs.insert({{opcode, 2}, 0x22});
-        }
-        for (std::string_view opcode: {"JMP", "MOVE"}) {
-            pairs.insert({{opcode, 2}, 0x23});
-        }
-        pairs.insert({{"JMP", 1}, 0x11});
-        pairs.insert({{"BR", 1}, 0x10});
-        return pairs;
-    }();
-    Pair pair = {identifier.lexeme, params.size()};
-    if (valid_pairs.count(pair) != 1) {
+    auto code = match_inst(identifier.lexeme, params.size());
+    if (code == std::nullopt) {
         return {};
     }
-    return Inst{params, identifier, valid_pairs.at(pair)};
+    return Inst{params, identifier, *code};
     
 }
 
@@ -590,72 +564,6 @@ bool gasm::Parser::check_reg_expr() {
 bool gasm::Parser::match_blank(Token::Type type) {
     match(BLANK);
     return match(type);
-}
-
-int gasm::Parser::precedence(Token::Type type) {
-    switch (type) {
-    case STAR: case SLASH: case PERCENTAGE:
-        return 1;
-    case PLUS: case MINUS:
-        return 2;
-    case GREATER_GREATER: case LESS_LESS: case GREATER_GREATER_GREATER:
-        return 3;
-    case LESS: case LESS_EQUAL:
-        return 4;
-    case EQUAL_EQUAL:
-        return 5;
-    case AMPERSAND:
-        return 6;
-    case CARET:
-        return 7;
-    case HASH:
-        return 8;
-    default:
-        assert(false);
-    }
-}
-
-bool gasm::Parser::is_op(Token::Type type) {
-    switch (type) {
-        case PLUS: case MINUS: case STAR: case SLASH:
-        case GREATER_GREATER:
-        case GREATER_GREATER_GREATER: case LESS: case LESS_EQUAL:
-        case EQUAL_EQUAL: case LESS_LESS: case HASH: case AMPERSAND:
-        case CARET: case PERCENTAGE: case TILDE:
-        return true;
-
-        default:
-        return false;
-    }
-}
-
-bool gasm::Parser::is_binary_op(Token::Type type) {
-    return is_op(type) && type != TILDE;
-}
-
-bool gasm::Parser::is_beta_binary_op(Token::Type type) {
-    switch (type) {
-        case PLUS: case MINUS: case STAR: case SLASH: 
-        case GREATER_GREATER:case LESS_LESS: case PERCENTAGE:
-        return true;
-
-        default:
-        return false;
-    }
-}
-
-bool gasm::Parser::is_gamma_binary_op(Token::Type type) {
-    switch (type) {
-        case PLUS: case MINUS: case STAR: case SLASH:
-        case GREATER_GREATER:
-        case GREATER_GREATER_GREATER: case LESS: case LESS_EQUAL:
-        case EQUAL_EQUAL: case LESS_LESS: case HASH: case AMPERSAND:
-        case CARET:
-        return true;
-
-        default:
-        return false;
-    }
 }
 
 std::optional<Expr> gasm::Parser::parse_atomic(bool allow_reg) {
