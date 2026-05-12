@@ -1,7 +1,7 @@
 #ifndef GASM_TOKEN
 #define GASM_TOKEN
 
-#include <string>
+#include <string_view>
 #include <array>
 
 namespace gasm {

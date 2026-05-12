@@ -1,8 +1,6 @@
 #ifndef GASM_TRANSPILER
 #define GASM_TRANSPILER
 
-#include <vector>
-#include <string>
 #include <iostream>
 
 #include <parser.hpp>
