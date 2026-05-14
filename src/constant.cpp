@@ -186,3 +186,25 @@ std::optional<std::string_view> gasm::get_instruction(Token::Type type) {
         return {};
     }
 }
+
+std::optional<Token::Type> gasm::get_type(std::string_view view) {
+    static const std::unordered_map<std::string_view, Token::Type> mp{
+        {"ADD", PLUS},
+        {"SUB", MINUS},
+        {"MUL", STAR},
+        {"DIV", SLASH},
+        {"AND", AMPERSAND},
+        {"OR", HASH},
+        {"CMPLT", LESS},
+        {"CMPEQ", EQUAL_EQUAL},
+        {"CMPLE", LESS_EQUAL},
+        {"SHR", GREATER_GREATER},
+        {"SRA", GREATER_GREATER_GREATER},
+        {"SHL", LESS_LESS},
+        {"XOR", CARET},
+    };
+    if (mp.count(view) == 1) {
+        return mp.at(view);
+    }
+    return {};
+}

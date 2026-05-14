@@ -193,18 +193,21 @@ int main(int argc, char** argv) {
         return 4;
     }
 
+    gasm::ToBeta to_beta{std::cout, parse_result};
+    gasm::ToGamma to_gamma{std::cout, parse_result};
+
     if (mode == DEBUG) {
         std::cout << "\n== Beta ==\n";
-        gasm::to_beta(std::cout, parse_result);
+        to_beta.transpile();
         std::cout << "\n\n== Gamma ==\n";
-        gasm::to_gamma(std::cout, parse_result);
+        to_gamma.transpile();
         std::cout << "\n";
         std::cout << std::flush;
     }
     else if (mode == GAMMA) {
-        gasm::to_gamma(std::cout, parse_result);
+        to_gamma.transpile();
     }
     else {
-        gasm::to_beta(std::cout, parse_result);
+        to_beta.transpile();
     }
 }

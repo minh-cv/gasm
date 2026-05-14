@@ -16,6 +16,7 @@ namespace gasm {
     bool is_beta_binary_op(Token::Type type);
     std::optional<std::string_view> get_instruction(Token::Type type);
     std::optional<std::string_view> get_operator_string(Token::Type type);
+    std::optional<Token::Type> get_type(std::string_view view);
 }
 
 #endif
