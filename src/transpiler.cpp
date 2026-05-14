@@ -173,7 +173,6 @@ void gasm::ToBeta::operator()(const Op& op) {
 }
 
 void gasm::ToBeta::operator()(const OpC& op) {
-    stream << "[DEBUG: " << op.lit.data << "]\n";
     stream << *get_instruction(op.type) << "C(" 
         << trim_reg_expr(op.ra) << ", "
         << op.lit.data << ", "
