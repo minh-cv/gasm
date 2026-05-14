@@ -1,7 +1,7 @@
 # gasm
 A transpiler written in C++20 that converts between Beta assembly and Gamma, a readable superset of Beta assembly that adds syntactic sugar for common instruction patterns.
 
-Try it now on [Compiler Explorer](https://godbolt.org/z/en8hzPWvK).
+Try it now on [Compiler Explorer](https://godbolt.org/z/z6EeKMens).
 
 An example program of Gamma
 ```
