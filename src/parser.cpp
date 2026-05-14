@@ -98,10 +98,11 @@ std::optional<Expr> gasm::Parser::parse_expr(bool allow_reg, std::optional<std::
     if (atomic_op == std::nullopt) {
         return {};
     }
+    std::size_t op_end = current;
     match(BLANK);
     Token expr_op = peek();
     if (!is_op(expr_op.type)) {
-        return Expr{substr(start, current), atomic_op->lowest_precedence, atomic_op->inner_lowest_precedence, atomic_op->has_reg_identifier};
+        return Expr{substr(start, op_end), atomic_op->lowest_precedence, atomic_op->inner_lowest_precedence, atomic_op->has_reg_identifier};
     }
     std::string lexeme = std::string{expr_op.lexeme};
     if (!is_binary_op(expr_op.type)) {
