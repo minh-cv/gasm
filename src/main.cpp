@@ -160,7 +160,8 @@ int main(int argc, char** argv) {
         std::cerr << "Error: non-ASCII encoding is not supported";
         return 3;
     }
-    auto lex_result = gasm::lex(text);
+    gasm::Lexer lexer{text};
+    auto lex_result = lexer.lex();
     if (mode == DEBUG) {
         std::cout << "== Lexer ==\n";
         for (const gasm::Token& token: lex_result.tokens) {
