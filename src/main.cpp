@@ -120,7 +120,7 @@ auto print_stmt = [](auto&& arg) {
 }
 
 int invalid_param(int errcode) {
-    std::cerr << "Usage: gasm <input_source> [-g | -b | --debug]";
+    std::cerr << "Usage: gasm <input_source> [-g | -b | --debug]\n";
     return errcode;
 }
 
@@ -160,7 +160,8 @@ int main(int argc, char** argv) {
         std::cerr << "Error: non-ASCII encoding is not supported";
         return 3;
     }
-    auto lex_result = gasm::lex(text);
+    gasm::Lexer lexer{text};
+    auto lex_result = lexer.lex();
     if (mode == DEBUG) {
         std::cout << "== Lexer ==\n";
         for (const gasm::Token& token: lex_result.tokens) {
@@ -173,7 +174,8 @@ int main(int argc, char** argv) {
             lex_result.print_error(error);
         }
     }
-    gasm::ParseResult parse_result = gasm::parse(lex_result);
+    gasm::Parser parser{lex_result};
+    gasm::ParseResult parse_result = parser.parse();
     if (mode == DEBUG) {
         std::cout << "\n== Parser ==\n";
         for (const gasm::Stmt& stmt: parse_result.stmts) {
@@ -191,17 +193,21 @@ int main(int argc, char** argv) {
         return 4;
     }
 
+    gasm::ToBeta to_beta{std::cout, parse_result};
+    gasm::ToGamma to_gamma{std::cout, parse_result};
+
     if (mode == DEBUG) {
         std::cout << "\n== Beta ==\n";
-        gasm::to_beta(std::cout, parse_result);
+        to_beta.transpile();
         std::cout << "\n\n== Gamma ==\n";
-        gasm::to_gamma(std::cout, parse_result);
+        to_gamma.transpile();
+        std::cout << "\n";
         std::cout << std::flush;
     }
     else if (mode == GAMMA) {
-        gasm::to_gamma(std::cout, parse_result);
+        to_gamma.transpile();
     }
     else {
-        gasm::to_beta(std::cout, parse_result);
+        to_beta.transpile();
     }
 }
